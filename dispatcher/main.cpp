@@ -41,7 +41,7 @@ public:
     virtual int operator()(int i) = 0;
 };
 class Operation1: public Callable {
-Public:
+public:
     Operation1(int a, int b)
     : __a(a), __b(b) {}
 
