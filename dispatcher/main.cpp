@@ -17,8 +17,10 @@
 #include "SDispatcher.h"
 /**
  * ------------------------------------------------------------------------------------------------
- * Main
+ * Definitions
  * ------------------------------------------------------------------------------------------------
+ *  Model 1
+ * ----------------------------------------------------------------------------
  */
 static int runable(int i) {
     return i * i;
@@ -29,7 +31,11 @@ public:
         return i + i;
     }
 };
-
+/**
+ * ----------------------------------------------------------------------------
+ *  Model 2
+ * ----------------------------------------------------------------------------
+ */
 class Callable {
 public:
     virtual int operator()(int i) = 0;
@@ -44,51 +50,86 @@ class Callable2: public Callable {
         return i * 10;
     }
 };
-
-int main() {   
-    using namespace std::placeholders;
+/**
+ * ------------------------------------------------------------------------------------------------
+ * Main
+ * ------------------------------------------------------------------------------------------------
+ */
+int main() {  
+    using namespace std::placeholders; 
     /**
      * --------------------------------------------------------------------------
-     * type 1
+     * Model 1
      * --------------------------------------------------------------------------
      */
     {
-        using Dispatcher = Helper::SDispatcher<std::string, std::function<int(int)>>;
-        Dispatcher d;
+        std::cout << "Model 1 ..." << std::endl;
         /**
          * register
          */
+        using Dispatcher = Helper::SDispatcher<
+            std::string, std::function<int(int)>>;
+        Dispatcher d;
         Process p;
-        d.add_callable("process" , std::bind(&Process::run, &p, _1));
-        d.add_callable("lambda"  , [](int i){ return i; });
-        d.add_callable("function", &runable);
+        d.emplace("process" , std::bind(&Process::run, &p, _1));
+        d.emplace("lambda"  , [](int i){ return i; });
+        d.emplace("function", &runable);
         /**
          * invoke
          */
-        std::cout << d.invoke("process" , 3) << std::endl;
-        std::cout << d.invoke("lambda"  , 3) << std::endl;
-        std::cout << d.invoke("function", 3) << std::endl;
+        std::cout << d("process" , 3) << std::endl;
+        std::cout << d("lambda"  , 3) << std::endl;
+        std::cout << d("function", 3) << std::endl;
     }
     /**
      * --------------------------------------------------------------------------
-     * type 2
+     * Model 2
      * --------------------------------------------------------------------------
      */
-    // {
-    //     using Dispatcher = Helper::SDispatcher<
-    //         std::string, std::shared_ptr<Callable>>;
-    //     Dispatcher d;
-    //     /**
-    //      * register
-    //      */
-    //     d.add_callable("Callable2" , std::make_shared<Callable2>());
-    //     d.add_callable("Callable2" , std::make_shared<Callable2>());
-    //     /* 
-    //      * invoke
-    //      */
-    //     std::cout << d.invoke("Callable2", 3) << std::endl;
-    //     std::cout << d.invoke("Callable2", 3) << std::endl;
-    // }
+    {
+        std::cout << "Model 2 ..." << std::endl;
+        /**
+         * register
+         */
+        using Dispatcher = Helper::SDispatcher<
+            std::string, std::shared_ptr<Callable>>;
+        Dispatcher d;
+        d.emplace("Callable2" , std::make_shared<Callable2>());
+        d.emplace("Callable2" , std::make_shared<Callable2>());
+        /* 
+         * invoke
+         */
+        std::cout << d("Callable2", 3) << std::endl;
+        std::cout << d("Callable2", 3) << std::endl;
+    }
+    /**
+     * --------------------------------------------------------------------------
+     * Model 3
+     * --------------------------------------------------------------------------
+     */
+    {
+        std::cout << "Model 3 ..." << std::endl;
+        /**
+         * register d1
+         */
+        using Dispatcher1 = Helper::SDispatcher<
+            std::string, std::shared_ptr<Callable>>;
+        auto d1 = std::make_shared<Dispatcher1>();
+        d1->emplace("Callable2" , std::make_shared<Callable2>());
+        d1->emplace("Callable2" , std::make_shared<Callable2>());
+        /**
+         * register d2
+         */
+        using Dispatcher2 = Helper::SDispatcher<
+            std::string, std::shared_ptr<Dispatcher1>>;
+        Dispatcher2 d2;
+        d2.emplace("d1" , d1);
+        /* 
+         * invoke d1 from d2
+         */
+        std::cout << d2("d1", "Callable2", 3) << std::endl;
+        std::cout << d2("d1", "Callable2", 3) << std::endl;
+    }
     return 0;
 }
 /**
