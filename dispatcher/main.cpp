@@ -40,12 +40,16 @@ class Callable {
 public:
     virtual int operator()(int i) = 0;
 };
-class Callable1: public Callable {
+class Operation1: public Callable {
+public:
+    Operation1(int a, int b)
+    : __a(a), __b(b) {}
+
     int operator()(int i){
-        return i * 10;
+        return i * __a + __b;
     }
 };
-class Callable2: public Callable {
+class Operation2: public Callable {
     int operator()(int i){
         return i * 10;
     }
@@ -94,13 +98,13 @@ int main() {
         using Dispatcher = Helper::SDispatcher<
             std::string, std::shared_ptr<Callable>>;
         Dispatcher d;
-        d.emplace("Callable2" , std::make_shared<Callable2>());
-        d.emplace("Callable2" , std::make_shared<Callable2>());
+        d.emplace("Operation1" , std::make_shared<Operation1>(3, 4));
+        d.emplace("Operation2" , std::make_shared<Operation2>());
         /* 
          * invoke
          */
-        std::cout << d("Callable2", 3) << std::endl;
-        std::cout << d("Callable2", 3) << std::endl;
+        std::cout << d("Operation1", 3) << std::endl;
+        std::cout << d("Operation2", 3) << std::endl;
     }
     /**
      * --------------------------------------------------------------------------
@@ -115,8 +119,8 @@ int main() {
         using Dispatcher1 = Helper::SDispatcher<
             std::string, std::shared_ptr<Callable>>;
         auto d1 = std::make_shared<Dispatcher1>();
-        d1->emplace("Callable2" , std::make_shared<Callable2>());
-        d1->emplace("Callable2" , std::make_shared<Callable2>());
+        d1->emplace("Operation1" , std::make_shared<Operation1>(1, 7));
+        d1->emplace("Operation2" , std::make_shared<Operation2>());
         /**
          * register d2
          */
@@ -127,8 +131,8 @@ int main() {
         /* 
          * invoke d1 from d2
          */
-        std::cout << d2("d1", "Callable2", 3) << std::endl;
-        std::cout << d2("d1", "Callable2", 3) << std::endl;
+        std::cout << d2("d1", "Operation1", 3) << std::endl;
+        std::cout << d2("d1", "Operation2", 3) << std::endl;
     }
     return 0;
 }
